@@ -60,7 +60,7 @@ window.INVITATION = {
   // Liste chargée par défaut dans le générateur (Nom ; places ; catégorie ; téléphone)
   listeInvites: [
     "C2B", "Bogo The Goat", "Ekwa Phone+", "Melissa", "Bantou B", "Yuma Dash", "Zozo Yuma",
-    "Zakalaha", "Gaz Mawete", "Gally", "DJ Wendy", "Ninikah", "Mani Loko",
+    "Zakalara", "Gaz Mawete", "Gally", "DJ Wendy", "Ninikah", "Mani Loko",
     "MC Donel Prince de la Ville", "NST El Diablo", "Isabelle", "Miss Malaïka", "The King Mandy",
     "Noely Be", "Sista Becky", "Jean Michel K", "Okito", "Slow Kamunga", "People.cd243",
     "Strong2Kinmoov", "Eden Mbenga", "Lëatïtia Kandolo", "Moko Buzz", "Balabala 243",
