@@ -58,6 +58,8 @@ td.cat span.vip { border-color: var(--signal); color: var(--signal); }
 td.act { white-space: nowrap; text-align: right; }
 td.act .btn + .btn { margin-left: 6px; }
 .note { margin: 0; font-size: 13px; color: var(--gris); max-width: 70ch; }
+.controle-info { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--trait); }
+#lien-controle { font-family: var(--f-mono); font-size: 13px; color: var(--signal); overflow-wrap: anywhere; }
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--craie); color: var(--asphalt); padding: 10px 16px; border-radius: 4px; font-family: var(--f-mono); font-size: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
 @media (max-width: 640px) {
   thead { display: none; }
@@ -92,6 +94,10 @@ td.act .btn + .btn { margin-left: 6px; }
       <label for="depart">N° du premier ticket<input id="depart" type="number" min="1" value="1"></label>
     </div>
     <label for="base">Adresse du site d'invitation<input id="base" type="url" spellcheck="false"></label>
+    <label for="secret">Code de contrôle (secret)
+      <span class="aide">Un mot ou une phrase que toi seul connais. Il signe chaque ticket : sans lui, impossible de fabriquer un faux. Donne-le aux agents de l'entrée pour activer leur téléphone. Il reste sur ce navigateur et n'est jamais mis dans le site. Si tu le changes, il faut régénérer et renvoyer tous les liens.</span>
+      <input id="secret" type="password" autocomplete="off" spellcheck="false" placeholder="ex. forgiveness-parking-1212">
+    </label>
     <label for="message">Message WhatsApp
       <span class="aide">Variables : {prenom}, {nom}, {places}, {lien}</span>
       <textarea id="message" rows="3"></textarea>
@@ -119,7 +125,10 @@ td.act .btn + .btn { margin-left: 6px; }
         <tbody id="lignes"></tbody>
       </table>
     </div>
-    <p class="note">La liste exportée sert aussi de liste d'entrée : à la porte, l'agent scanne le QR code du ticket (n'importe quelle appli appareil photo l'affiche) et vérifie le numéro et le nom dans la liste.</p>
+    <div class="controle-info">
+      <p class="note"><b>À l'entrée :</b> chaque agent ouvre la page de contrôle une fois, entre le code de contrôle, puis scanne les QR codes avec l'appareil photo de son téléphone. La page affiche VALIDE, NON VALIDE ou DÉJÀ ENTRÉ.</p>
+      <div class="actions"><code id="lien-controle"></code><button class="btn btn-ligne petit" type="button" id="copier-controle">Copier le lien</button></div>
+    </div>
   </section>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
@@ -162,24 +171,34 @@ td.act .btn + .btn { margin-left: 6px; }
   $("#depart").value = s.depart || 1;
   $("#base").value = s.base ? normaliser(s.base) : baseDefaut;
   $("#message").value = s.message || MESSAGE;
+  try { $("#secret").value = localStorage.getItem("pson-secret") || ""; } catch (e) {}
 
   var invites = [];
 
   function generer() {
+    var secret = $("#secret").value.trim();
+    try { localStorage.setItem("pson-secret", secret); } catch (e) {}
     var placesDef = Math.max(1, +$("#places").value || 2), catDef = $("#categorie").value.trim() || "Invité";
     var no = Math.max(1, +$("#depart").value || 1), base = normaliser($("#base").value.trim() || baseDefaut);
     $("#base").value = base;
     invites = $("#liste").value.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
       var p = l.split(/\s*[;,\t]\s*/);
       var inv = { nom: p[0], places: Math.max(1, +p[1] || placesDef), categorie: p[2] || catDef, tel: (p[3] || "").replace(/\D/g, ""), numero: no++ };
-      inv.lien = base + "?i=" + window.Lien.encoder(inv);
-      inv.message = $("#message").value
-        .replace(/\{prenom\}/g, window.Lien.court(inv.nom)).replace(/\{nom\}/g, inv.nom)
-        .replace(/\{places\}/g, inv.places).replace(/\{lien\}/g, inv.lien);
+      inv.token = window.Lien.encoder(inv);
       return inv;
     });
     garder({ liste: $("#liste").value, places: placesDef, categorie: catDef, depart: $("#depart").value, base: $("#base").value, message: $("#message").value });
-    rendre();
+    $("#lien-controle").textContent = base + "controle/";
+    return Promise.all(invites.map(function (inv) { return window.Lien.signer(secret, inv.token); })).then(function (sigs) {
+      invites.forEach(function (inv, k) {
+        inv.lien = base + "?i=" + inv.token + (sigs[k] ? "&s=" + sigs[k] : "");
+        inv.message = $("#message").value
+          .replace(/\{prenom\}/g, window.Lien.court(inv.nom)).replace(/\{nom\}/g, inv.nom)
+          .replace(/\{places\}/g, inv.places).replace(/\{lien\}/g, inv.lien);
+      });
+      rendre();
+      if (!secret) $("#etat-form").textContent = "Attention : sans code de contrôle, les tickets ne pourront pas être vérifiés à l'entrée.";
+    });
   }
 
   function rendre() {
@@ -214,7 +233,8 @@ td.act .btn + .btn { margin-left: 6px; }
     t.remove();
   }
 
-  $("#form").addEventListener("submit", function (e) { e.preventDefault(); generer(); toast(invites.length + " invitations générées"); });
+  $("#form").addEventListener("submit", function (e) { e.preventDefault(); generer().then(function () { toast(invites.length + " invitations générées"); }); });
+  $("#copier-controle").addEventListener("click", function () { copier($("#lien-controle").textContent, "Lien de contrôle copié"); });
   $("#lignes").addEventListener("click", function (e) {
     var b = e.target.closest("[data-copier]");
     if (b) copier(invites[+b.dataset.copier].lien, "Lien copié");

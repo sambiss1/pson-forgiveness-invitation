@@ -1,9 +1,9 @@
-/* Encodeur QR code minimal (mode octet, correction M, versions 1 à 10).
+/* Encodeur QR code minimal (mode octet, correction M, versions 1 à 15).
    Sans dépendance. Usage : QR.svg("texte", { dark:"#000", light:"#fff" }) */
 (function (global) {
   "use strict";
-  var ECC_PER_BLOCK = [-1, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26];
-  var NUM_BLOCKS = [-1, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5];
+  var ECC_PER_BLOCK = [-1, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26, 30, 22, 22, 24, 24];
+  var NUM_BLOCKS = [-1, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 5, 8, 9, 9, 10];
 
   function rawModules(ver) {
     var r = (16 * ver + 128) * ver + 64;
@@ -64,11 +64,11 @@
   function encode(text) {
     var bytes = utf8(text);
     var ver;
-    for (ver = 1; ver <= 10; ver++) {
+    for (ver = 1; ver <= 15; ver++) {
       var ccBits = ver < 10 ? 8 : 16;
       if (4 + ccBits + bytes.length * 8 <= dataCodewords(ver) * 8) break;
     }
-    if (ver > 10) throw new Error("Texte trop long pour le QR code");
+    if (ver > 15) throw new Error("Texte trop long pour le QR code");
     var size = ver * 4 + 17;
     var cap = dataCodewords(ver) * 8;
 

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#12110f">
+<title>Contrôle · Forgiveness</title>
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;600&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+/* Poste de contrôle à l'entrée du parking : un verdict lisible à un mètre, en un coup d'œil. */
+:root {
+  --asphalt: #12110f; --beton: #1c1b18; --trait: #36332b; --craie: #f1ede3; --gris: #9d978a;
+  --signal: #f4c21f; --ink: #15130e;
+  --ok: #2f9e55; --non: #d6383e; --deja: #f08a24;
+  --f-display: "Anton", "Arial Narrow", Impact, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-body: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body { margin: 0; background: var(--asphalt); color: var(--craie); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
+.wrap { max-width: 520px; margin: 0 auto; padding: max(20px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 18px; }
+header { display: flex; align-items: center; gap: 10px; }
+.p-logo { display: inline-grid; place-items: center; width: 28px; height: 28px; background: var(--signal); color: var(--ink); font-family: var(--f-display); font-size: 19px; border-radius: 4px; }
+header b { font-family: var(--f-display); font-weight: 400; font-size: 20px; letter-spacing: .05em; text-transform: uppercase; }
+header small { display: block; font-family: var(--f-mono); font-size: 10px; letter-spacing: .16em; color: var(--gris); text-transform: uppercase; }
+.hazard { height: 8px; background: repeating-linear-gradient(-45deg, var(--signal) 0 8px, var(--asphalt) 8px 16px); }
+.carte { background: var(--beton); border: 1px solid #27251f; border-radius: 8px; padding: 20px; display: grid; gap: 14px; }
+h1, h2 { margin: 0; font-family: var(--f-display); font-weight: 400; text-transform: uppercase; letter-spacing: .03em; line-height: 1.05; }
+h2 { font-size: 26px; }
+p { margin: 0; }
+.gris { color: var(--gris); font-size: 14px; }
+label { display: grid; gap: 6px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
+input { width: 100%; padding: 14px; background: var(--asphalt); color: var(--craie); border: 1px solid var(--trait); border-radius: 6px; font-family: var(--f-mono); font-size: 16px; }
+.btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 56px; padding: 12px 18px; border: 0; border-radius: 6px; cursor: pointer; font-family: var(--f-display); font-size: 20px; letter-spacing: .05em; text-transform: uppercase; text-decoration: none; }
+.btn-signal { background: var(--signal); color: var(--ink); }
+.btn-blanc { background: var(--craie); color: var(--ink); }
+.btn-ligne { background: transparent; color: var(--craie); box-shadow: inset 0 0 0 1px var(--trait); min-height: 44px; font-size: 15px; }
+.erreur { color: #ff8c8f; font-size: 14px; }
+
+/* Verdict */
+.verdict { border-radius: 10px; padding: 26px 20px 22px; display: grid; gap: 14px; color: #fff; }
+.verdict.ok { background: var(--ok); }
+.verdict.non { background: var(--non); }
+.verdict.deja { background: var(--deja); color: var(--ink); }
+.verdict h1 { font-size: clamp(54px, 17vw, 84px); }
+.verdict .nom { font-family: var(--f-display); font-size: clamp(26px, 8vw, 36px); text-transform: uppercase; letter-spacing: .02em; line-height: 1.1; overflow-wrap: anywhere; }
+.infos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin: 0; }
+.infos div { min-width: 0; }
+.infos dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+.infos dd { margin: 2px 0 0; font-family: var(--f-mono); font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; }
+.verdict .btn-blanc { margin-top: 4px; }
+.coche { font-family: var(--f-mono); font-weight: 700; font-size: 15px; }
+
+.compteurs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.compteurs div { background: var(--asphalt); border-radius: 6px; padding: 12px; }
+.compteurs b { display: block; font-family: var(--f-display); font-weight: 400; font-size: 38px; color: var(--signal); line-height: 1; font-variant-numeric: tabular-nums; }
+.compteurs span { font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; color: var(--gris); text-transform: uppercase; }
+.journal { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.journal li { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--trait); }
+.journal .h, .journal .n { font-family: var(--f-mono); color: var(--gris); font-variant-numeric: tabular-nums; }
+.journal .nm { min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.confirmer { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--non); border-radius: 6px; }
+.rangee { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="p-logo">P</span>
+    <div><b id="titre">Contrôle des entrées</b><small id="sous-titre">PSON · Forgiveness</small></div>
+  </header>
+  <div class="hazard" aria-hidden="true"></div>
+
+  <!-- 1. Activation du téléphone -->
+  <form class="carte" id="activation" hidden>
+    <h2>Activer ce téléphone</h2>
+    <p class="gris">Cette page est réservée aux agents d'accueil. Entre le code de contrôle donné par l'organisateur. Il suffit de le faire une seule fois sur ce téléphone.</p>
+    <label for="code">Code de contrôle<input id="code" type="password" autocomplete="off" spellcheck="false" required></label>
+    <p class="erreur" id="erreur-code" hidden></p>
+    <button class="btn btn-signal" type="submit">Activer</button>
+  </form>
+
+  <!-- 2. Verdict sur un ticket -->
+  <section class="verdict" id="verdict" hidden aria-live="assertive">
+    <h1 id="v-titre">Valide</h1>
+    <div class="nom" id="v-nom"></div>
+    <dl class="infos" id="v-infos">
+      <div><dt>Ticket</dt><dd id="v-no"></dd></div>
+      <div><dt>Place</dt><dd id="v-place"></dd></div>
+      <div><dt>Personnes</dt><dd id="v-pers"></dd></div>
+      <div><dt>Autorisé</dt><dd id="v-max"></dd></div>
+    </dl>
+    <p id="v-texte"></p>
+    <button class="btn btn-blanc" type="button" id="valider" hidden>Valider l'entrée</button>
+    <p class="coche" id="v-coche" hidden></p>
+  </section>
+
+  <!-- 3. Tableau de bord du téléphone -->
+  <section class="carte" id="tableau" hidden>
+    <h2 id="t-titre">Prêt à scanner</h2>
+    <p class="gris" id="t-consigne">Ouvre l'appareil photo du téléphone et vise le QR code du ticket. Touche le lien qui apparaît : le résultat s'affiche ici.</p>
+    <div class="compteurs">
+      <div><b id="c-tickets">0</b><span>Tickets entrés</span></div>
+      <div><b id="c-pers">0</b><span>Personnes</span></div>
+    </div>
+    <p class="gris">Ces chiffres ne concernent que ce téléphone.</p>
+    <ul class="journal" id="journal"></ul>
+    <button class="btn btn-ligne" type="button" id="effacer">Effacer les entrées de ce téléphone</button>
+    <div class="confirmer" id="confirmer" hidden>
+      <p>Effacer toutes les entrées enregistrées sur ce téléphone ? Les tickets déjà entrés pourront être scannés à nouveau.</p>
+      <div class="rangee">
+        <button class="btn btn-ligne" type="button" id="annuler">Annuler</button>
+        <button class="btn btn-signal" type="button" id="oui-effacer">Effacer</button>
+      </div>
+    </div>
+    <button class="btn btn-ligne" type="button" id="desactiver">Désactiver ce téléphone</button>
+  </section>
+</div>
+
+<script src="../config.js"></script>
+<script src="../assets/lien.js"></script>
+<script>
+(function () {
+  "use strict";
+  var C = window.INVITATION, $ = function (s) { return document.querySelector(s); };
+  var CLE_SECRET = "pson-controle-secret", CLE_ENTREES = "pson-entrees";
+  function lire(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
+  function ecrire(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function pad(n, l) { n = String(n); while (n.length < l) n = "0" + n; return n; }
+  function heure(t) { return new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  $("#sous-titre").textContent = C.artiste + " · " + C.album + " · " + C.lieu.nom;
+  var params = new URLSearchParams(location.search);
+  var ticket = window.Lien.lire(location.search);
+  var annonce = Math.max(1, +params.get("p") || 1);
+
+  function tableau() {
+    var e = lire(CLE_ENTREES, {}), liste = Object.keys(e).map(function (k) { return e[k]; }).sort(function (a, b) { return b.t - a.t; });
+    $("#c-tickets").textContent = liste.length;
+    $("#c-pers").textContent = liste.reduce(function (s, x) { return s + (x.p || 1); }, 0);
+    $("#journal").innerHTML = liste.slice(0, 12).map(function (x) {
+      return '<li><span class="h">' + heure(x.t) + '</span><span class="nm">' + esc(x.nom) + '</span><span class="n">' + (x.p || 1) + " pers.</span></li>";
+    }).join("");
+    $("#tableau").hidden = false;
+  }
+
+  function verdict(type, titre, texte) {
+    var v = $("#verdict");
+    v.className = "verdict " + type; v.hidden = false;
+    $("#v-titre").textContent = titre; $("#v-texte").textContent = texte || "";
+    $("#v-texte").hidden = !texte;
+  }
+
+  function afficherTicket(secret) {
+    if (!ticket || !ticket.token) { tableau(); return; }
+    var max = ticket.places || 1, pers = Math.min(annonce, max);
+    $("#v-nom").textContent = ticket.nom || "Sans nom";
+    $("#v-no").textContent = "N° " + pad(ticket.numero, 5);
+    $("#v-place").textContent = (ticket.categorie || "Invité").toUpperCase() + " " + pad(ticket.numero, 2);
+    $("#v-pers").textContent = pers;
+    $("#v-max").textContent = max;
+    window.Lien.verifier(secret, ticket.token, ticket.sig).then(function (ok) {
+      if (!ok) {
+        verdict("non", "Non valide", ticket.sig
+          ? "Ce ticket n'a pas été émis par l'organisateur, ou ce téléphone a un code de contrôle différent. Vérifie le nom dans la liste."
+          : "Ce ticket ne porte pas de signature. Vérifie le nom dans la liste de l'organisateur.");
+        tableau(); return;
+      }
+      var e = lire(CLE_ENTREES, {}), deja = e[ticket.numero];
+      if (deja) {
+        verdict("deja", "Déjà entré", "Ce ticket a été validé à " + heure(deja.t) + " sur ce téléphone (" + (deja.p || 1) + " pers.). Ne pas laisser entrer une deuxième fois.");
+      } else {
+        verdict("ok", "Valide", annonce > max ? "L'invité a annoncé " + annonce + " personnes, mais son invitation en autorise " + max + "." : "");
+        $("#valider").hidden = false;
+      }
+      tableau();
+    });
+  }
+
+  $("#valider").addEventListener("click", function () {
+    var e = lire(CLE_ENTREES, {}), pers = Math.min(annonce, ticket.places || 1), t = Date.now();
+    e[ticket.numero] = { nom: ticket.nom, p: pers, t: t };
+    ecrire(CLE_ENTREES, e);
+    this.hidden = true;
+    $("#v-coche").textContent = "✓ Entrée enregistrée à " + heure(t) + ". Ferme cet onglet et scanne le ticket suivant.";
+    $("#v-coche").hidden = false;
+    if (C.rsvpWebhook) {
+      try { fetch(C.rsvpWebhook, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ numero: pad(ticket.numero, 5), nom: ticket.nom, reponse: "entree", personnes: pers, categorie: ticket.categorie, mot: "", date: new Date(t).toISOString() }) }).catch(function () {}); } catch (err) {}
+    }
+    tableau();
+  });
+
+  $("#activation").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var code = $("#code").value.trim();
+    if (!code) return;
+    // Si un ticket est ouvert, on vérifie le code dessus avant d'activer
+    var test = ticket && ticket.token && ticket.sig ? window.Lien.verifier(code, ticket.token, ticket.sig) : Promise.resolve(true);
+    test.then(function (ok) {
+      if (!ok) { $("#erreur-code").textContent = "Ce code ne correspond pas à ce ticket. Vérifie le code avec l'organisateur."; $("#erreur-code").hidden = false; return; }
+      ecrire(CLE_SECRET, code);
+      $("#activation").hidden = true;
+      afficherTicket(code);
+    });
+  });
+
+  $("#effacer").addEventListener("click", function () { $("#confirmer").hidden = false; this.hidden = true; });
+  $("#annuler").addEventListener("click", function () { $("#confirmer").hidden = true; $("#effacer").hidden = false; });
+  $("#oui-effacer").addEventListener("click", function () { ecrire(CLE_ENTREES, null); $("#confirmer").hidden = true; $("#effacer").hidden = false; tableau(); });
+  $("#desactiver").addEventListener("click", function () { ecrire(CLE_SECRET, null); location.href = location.pathname; });
+
+  if (!window.crypto || !crypto.subtle) {
+    verdict("non", "Connexion non sécurisée", "Ouvre cette page en https pour vérifier les tickets.");
+    return;
+  }
+  var secret = lire(CLE_SECRET, "");
+  if (!secret) $("#activation").hidden = false;
+  else afficherTicket(secret);
+})();
+</script>
+</body>
+</html>

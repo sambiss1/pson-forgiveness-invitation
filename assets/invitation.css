@@ -231,7 +231,7 @@ body::before {
 .barres { display: flex; align-items: stretch; height: 54px; gap: 0; }
 .barres i { display: block; background: var(--encre); }
 .qr { display: grid; place-items: center; padding: 6px 0 4px; }
-.qr svg { width: min(190px, 62%); height: auto; background: #fff; padding: 6px; border-radius: 2px; }
+.qr svg { width: min(250px, 80%); max-width: 100%; height: auto; image-rendering: pixelated; background: #fff; border-radius: 3px; }
 .t-champs dd.t-pers { font-size: 11px; font-weight: 500; letter-spacing: .08em; color: var(--encre-2); }
 .zone-tampon { display: grid; place-items: center; }
 .tampon {

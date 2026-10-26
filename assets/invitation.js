@@ -172,8 +172,16 @@
       var n = rep.nb;
       $("#t-place").textContent = place();
       $("#t-pers").textContent = n + (n > 1 ? " personnes" : " personne");
-      var contenu = [C.artiste + "-" + C.album, "N°" + pad(invite.numero, 5), rep.nom, n + " pers.", place()].join(" | ");
-      try { $("#qr").innerHTML = window.QR.svg(contenu, { dark: "#1b1914", light: "#ffffff", margin: 1 }); $("#qr").hidden = false; $("#barres").hidden = true; } catch (e) {}
+      // Le QR ouvre la page de contrôle : l'agent scanne avec l'appareil photo du téléphone
+      var token = (lu && lu.token) || window.Lien.encoder({ nom: rep.nom, places: invite.places, categorie: invite.categorie, numero: invite.numero });
+      var ctrl = new URL("controle/", location.href);
+      ctrl.search = "";
+      var contenu = ctrl.href + "?i=" + token + (lu && lu.sig ? "&s=" + lu.sig : "") + "&p=" + n;
+      try { $("#qr").dataset.contenu = contenu; $("#qr").innerHTML = window.QR.svg(contenu, { dark: "#1b1914", light: "#ffffff", margin: 4 }); $("#qr").hidden = false; $("#barres").hidden = true;
+        // Taille en nombre entier de pixels par module : QR net, lu du premier coup
+        var svgQr = $("#qr svg"), mods = svgQr.viewBox.baseVal.width, dispo = Math.min(260, $("#qr").clientWidth * 0.82);
+        svgQr.style.width = (Math.max(3, Math.floor(dispo / mods)) * mods) + "px";
+      } catch (e) {}
       $("#msg-oui").innerHTML = "C'est validé pour <b>" + n + (n > 1 ? " personnes" : " personne") + "</b>. Présente ce QR code à l'entrée du parking.";
       tampon.textContent = "Validé"; tampon.hidden = false;
       if (anime) { void tampon.offsetWidth; tampon.classList.add("frappe"); }
