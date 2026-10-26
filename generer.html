@@ -35,6 +35,12 @@ header small { display: block; font-family: var(--f-mono); font-size: 11px; lett
 .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
 label { display: grid; gap: 6px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
 label span.aide { text-transform: none; letter-spacing: 0; font-size: 11px; }
+select { width: 100%; padding: 10px 12px; background: var(--asphalt); color: var(--craie); border: 1px solid var(--trait); border-radius: 4px; font-family: var(--f-mono); font-size: 13px; letter-spacing: 0; text-transform: none; }
+.cat-select { width: auto; padding: 4px 8px; font-size: 12px; border-radius: 99px; }
+.cat-select.vip { border-color: var(--signal); color: var(--signal); }
+.repartition { display: flex; flex-wrap: wrap; gap: 6px; }
+.repartition span { font-family: var(--f-mono); font-size: 11px; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--trait); color: var(--gris); }
+.repartition b { color: var(--craie); font-weight: 700; }
 input, textarea { width: 100%; padding: 10px 12px; background: var(--asphalt); color: var(--craie); border: 1px solid var(--trait); border-radius: 4px; font-family: var(--f-mono); font-size: 13px; letter-spacing: 0; text-transform: none; }
 textarea { resize: vertical; line-height: 1.6; }
 #liste { min-height: 170px; }
@@ -90,7 +96,10 @@ td.act .btn + .btn { margin-left: 6px; }
     </label>
     <div class="grille">
       <label for="places">Places par défaut<input id="places" type="number" min="1" max="10" value="2"></label>
-      <label for="categorie">Catégorie par défaut<input id="categorie" type="text" list="cats" value="Invité"></label>
+      <label for="categorie">Catégorie par défaut
+        <select id="categorie"></select>
+        <input id="categorie-autre" type="text" placeholder="Nom de la catégorie" hidden>
+      </label>
       <label for="depart">N° du premier ticket<input id="depart" type="number" min="1" value="1"></label>
     </div>
     <label for="base">Adresse du site d'invitation<input id="base" type="url" spellcheck="false"></label>
@@ -102,7 +111,6 @@ td.act .btn + .btn { margin-left: 6px; }
       <span class="aide">Variables : {prenom}, {nom}, {places}, {lien}</span>
       <textarea id="message" rows="3"></textarea>
     </label>
-    <datalist id="cats"><option value="Invité"><option value="VIP"><option value="Presse"><option value="Artiste"><option value="Staff"></datalist>
     <div class="actions">
       <button class="btn btn-signal" type="submit">Générer les invitations</button>
       <span class="note" id="etat-form"></span>
@@ -115,6 +123,7 @@ td.act .btn + .btn { margin-left: 6px; }
       <div><b id="r-places">0</b><span>Places au total</span></div>
       <div><b id="r-vip">0</b><span>VIP</span></div>
     </div>
+    <div class="repartition" id="repartition"></div>
     <div class="actions">
       <button class="btn btn-ligne petit" type="button" id="tout-copier">Copier tous les messages</button>
       <button class="btn btn-ligne petit" type="button" id="csv">Exporter la liste (CSV)</button>
@@ -167,7 +176,19 @@ td.act .btn + .btn { margin-left: 6px; }
   var s = lire();
   $("#liste").value = s.liste != null ? s.liste : EXEMPLES;
   $("#places").value = s.places || C.placesParDefaut || 2;
-  $("#categorie").value = s.categorie || C.categorieParDefaut || "Invité";
+  var CATS = (C.categories && C.categories.length) ? C.categories.slice() : ["VIP", "Invité"];
+  $("#categorie").innerHTML = CATS.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + "</option>"; }).join("") + '<option value="__autre">Autre…</option>';
+  var catInit = s.categorie || C.categorieParDefaut || CATS[0];
+  if (CATS.indexOf(catInit) >= 0) $("#categorie").value = catInit;
+  else { $("#categorie").value = "__autre"; $("#categorie-autre").value = catInit; $("#categorie-autre").hidden = false; }
+  $("#categorie").addEventListener("change", function () {
+    var autre = this.value === "__autre";
+    $("#categorie-autre").hidden = !autre;
+    if (autre) $("#categorie-autre").focus();
+  });
+  function categorieDefaut() {
+    return ($("#categorie").value === "__autre" ? $("#categorie-autre").value.trim() : $("#categorie").value) || "Invité";
+  }
   $("#depart").value = s.depart || 1;
   $("#base").value = s.base ? normaliser(s.base) : baseDefaut;
   $("#message").value = s.message || MESSAGE;
@@ -178,7 +199,7 @@ td.act .btn + .btn { margin-left: 6px; }
   function generer() {
     var secret = $("#secret").value.trim();
     try { localStorage.setItem("pson-secret", secret); } catch (e) {}
-    var placesDef = Math.max(1, +$("#places").value || 2), catDef = $("#categorie").value.trim() || "Invité";
+    var placesDef = Math.max(1, +$("#places").value || 2), catDef = categorieDefaut();
     var no = Math.max(1, +$("#depart").value || 1), base = normaliser($("#base").value.trim() || baseDefaut);
     $("#base").value = base;
     invites = $("#liste").value.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
@@ -201,17 +222,34 @@ td.act .btn + .btn { margin-left: 6px; }
     });
   }
 
+  function selectCat(cat, k) {
+    var liste = CATS.indexOf(cat) >= 0 ? CATS : CATS.concat([cat]);
+    return '<select class="cat-select' + (/vip/i.test(cat) ? " vip" : "") + '" data-k="' + k + '" aria-label="Catégorie">' +
+      liste.map(function (c) { return '<option value="' + esc(c) + '"' + (c === cat ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") + "</select>";
+  }
+  // Réécrit la liste à partir des invités (après un changement de catégorie dans le tableau)
+  function reecrireListe() {
+    // N'écrit places et catégorie que s'ils diffèrent des valeurs par défaut
+    var placesDef = Math.max(1, +$("#places").value || 2), catDef = categorieDefaut();
+    $("#liste").value = invites.map(function (i) {
+      return [i.nom, i.places === placesDef ? "" : i.places, i.categorie === catDef ? "" : i.categorie, i.tel].join(" ; ").replace(/( ; )+$/, "");
+    }).join("\n");
+  }
   function rendre() {
     $("#r-inv").textContent = invites.length;
     $("#r-places").textContent = invites.reduce(function (t, i) { return t + i.places; }, 0);
     $("#r-vip").textContent = invites.filter(function (i) { return /vip/i.test(i.categorie); }).length;
+    var compte = {};
+    invites.forEach(function (i) { compte[i.categorie] = (compte[i.categorie] || 0) + 1; });
+    $("#repartition").innerHTML = Object.keys(compte).sort(function (a, b) { return compte[b] - compte[a]; })
+      .map(function (c) { return "<span>" + esc(c) + " <b>" + compte[c] + "</b></span>"; }).join("");
     $("#lignes").innerHTML = invites.map(function (inv, k) {
       var wa = "https://wa.me/" + inv.tel + "?text=" + encodeURIComponent(inv.message);
       return "<tr>" +
         '<td class="num">' + pad(inv.numero, 5) + "</td>" +
         '<td class="nom">' + esc(inv.nom) + "</td>" +
         '<td class="places">' + inv.places + (inv.places > 1 ? " places" : " place") + "</td>" +
-        '<td class="cat"><span class="' + (/vip/i.test(inv.categorie) ? "vip" : "") + '">' + esc(inv.categorie) + "</span></td>" +
+        '<td class="cat">' + selectCat(inv.categorie, k) + "</td>" +
         '<td class="act">' +
           '<a class="btn btn-ligne petit" href="' + esc(inv.lien) + '" target="_blank" rel="noopener">Aperçu</a>' +
           '<button class="btn btn-ligne petit" type="button" data-copier="' + k + '">Copier le lien</button>' +
@@ -235,6 +273,13 @@ td.act .btn + .btn { margin-left: 6px; }
 
   $("#form").addEventListener("submit", function (e) { e.preventDefault(); generer().then(function () { toast(invites.length + " invitations générées"); }); });
   $("#copier-controle").addEventListener("click", function () { copier($("#lien-controle").textContent, "Lien de contrôle copié"); });
+  $("#lignes").addEventListener("change", function (e) {
+    var sel = e.target.closest(".cat-select");
+    if (!sel) return;
+    invites[+sel.dataset.k].categorie = sel.value;
+    reecrireListe();
+    generer().then(function () { toast("Catégorie mise à jour, lien régénéré"); });
+  });
   $("#lignes").addEventListener("click", function (e) {
     var b = e.target.closest("[data-copier]");
     if (b) copier(invites[+b.dataset.copier].lien, "Lien copié");

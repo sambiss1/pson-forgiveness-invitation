@@ -10,6 +10,7 @@ Site statique (HTML/CSS/JS, aucune dépendance à installer) pour la release par
 ## Comment ça marche
 
 1. L'organisateur ouvre `generer.html`, colle sa liste (un invité par ligne : `Nom ; places ; catégorie ; téléphone`), puis clique sur **Générer les invitations**.
+   Les catégories (VIP, Artiste, Influenceur, Presse, Partenaire, Sponsor, Invité, Famille, Staff, ou « Autre… ») se choisissent dans le menu « Catégorie par défaut », ou invité par invité dans le tableau des résultats. La liste se modifie dans `config.js` (`categories`).
 2. Chaque invité a un lien unique (`/?i=…`) qui contient son nom, son nombre de places, sa catégorie et son numéro de ticket. Le bouton **WhatsApp** ouvre un message déjà rédigé, adressé au bon numéro quand on l'a renseigné.
 3. L'invité ouvre son lien et voit la borne du parking (« Bienvenue Christelle »). Il prend son ticket, découvre l'invitation et réserve (nombre de personnes, petit mot pour PSON). Il obtient alors un ticket **VALIDÉ** avec un QR code, qu'il peut enregistrer en image.
 4. À l'entrée, l'agent scanne le QR code avec l'**appareil photo normal** de son téléphone, ce qui ouvre la page `/controle/`. Elle affiche en grand **VALIDE** (vert, avec le bouton « Valider l'entrée »), **DÉJÀ ENTRÉ** (orange, avec l'heure du premier passage) ou **NON VALIDE** (rouge).

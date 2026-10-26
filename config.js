@@ -54,6 +54,9 @@ window.INVITATION = {
   placesParDefaut: 2,
   categorieParDefaut: "VIP",
 
+  // Catégories proposées dans le générateur (affichées sur le ticket : « VIP 07 », « PRESSE 12 »…)
+  categories: ["VIP", "Artiste", "Influenceur", "Presse", "Partenaire", "Sponsor", "Invité", "Famille", "Staff"],
+
   // Liste chargée par défaut dans le générateur (Nom ; places ; catégorie ; téléphone)
   listeInvites: [
     "C2B", "Bogo The Goat", "Ekwa Phone+", "Melissa", "Bantou B", "Yuma Dash", "Zozo Yuma",
