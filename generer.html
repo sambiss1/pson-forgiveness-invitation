@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<title>Générateur · Forgiveness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Poste de contrôle du parking : un pupitre sobre, le jaune réservé aux actions. */
+:root {
+  --asphalt: #12110f; --beton: #1c1b18; --beton-2: #27251f; --trait: #36332b;
+  --craie: #f1ede3; --gris: #9d978a; --signal: #f4c21f; --signal-ink: #15130e; --ok: #7fb069;
+  --f-display: "Anton", "Arial Narrow", Impact, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-body: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--asphalt); color: var(--craie); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 28px max(16px, env(safe-area-inset-right, 0px)) 60px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 22px; }
+header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.p-logo { display: inline-grid; place-items: center; width: 30px; height: 30px; background: var(--signal); color: var(--signal-ink); font-family: var(--f-display); font-size: 20px; border-radius: 4px; }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 28px; letter-spacing: .03em; text-transform: uppercase; line-height: 1.1; }
+header small { display: block; font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; color: var(--gris); text-transform: uppercase; }
+.hazard { height: 8px; background: repeating-linear-gradient(-45deg, var(--signal) 0 8px, var(--asphalt) 8px 16px); }
+.panneau { background: var(--beton); border: 1px solid var(--beton-2); border-radius: 6px; padding: 20px; display: grid; gap: 16px; }
+.grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
+label { display: grid; gap: 6px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
+label span.aide { text-transform: none; letter-spacing: 0; font-size: 11px; }
+input, textarea { width: 100%; padding: 10px 12px; background: var(--asphalt); color: var(--craie); border: 1px solid var(--trait); border-radius: 4px; font-family: var(--f-mono); font-size: 13px; letter-spacing: 0; text-transform: none; }
+textarea { resize: vertical; line-height: 1.6; }
+#liste { min-height: 170px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 8px 16px; border-radius: 4px; border: 0; cursor: pointer; text-decoration: none; font-family: var(--f-display); font-size: 15px; letter-spacing: .05em; text-transform: uppercase; }
+.btn-signal { background: var(--signal); color: var(--signal-ink); }
+.btn-ligne { background: transparent; color: var(--craie); box-shadow: inset 0 0 0 1px var(--trait); }
+.btn-ligne:hover { box-shadow: inset 0 0 0 1px var(--gris); }
+.petit { min-height: 34px; padding: 4px 10px; font-size: 13px; }
+.resume { display: flex; gap: 24px; flex-wrap: wrap; align-items: baseline; }
+.resume b { font-family: var(--f-display); font-weight: 400; font-size: 34px; color: var(--signal); line-height: 1; font-variant-numeric: tabular-nums; }
+.resume span { display: block; font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; color: var(--gris); text-transform: uppercase; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--gris); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--trait); }
+td { padding: 10px; border-bottom: 1px solid var(--beton-2); vertical-align: middle; }
+td.num { font-family: var(--f-mono); color: var(--signal); font-variant-numeric: tabular-nums; }
+td.nom { font-weight: 600; }
+td.cat span { font-family: var(--f-mono); font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--trait); }
+td.cat span.vip { border-color: var(--signal); color: var(--signal); }
+td.act { white-space: nowrap; text-align: right; }
+td.act .btn + .btn { margin-left: 6px; }
+.note { margin: 0; font-size: 13px; color: var(--gris); max-width: 70ch; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--craie); color: var(--asphalt); padding: 10px 16px; border-radius: 4px; font-family: var(--f-mono); font-size: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+@media (max-width: 640px) {
+  thead { display: none; }
+  table, tbody, tr, td { display: block; }
+  tr { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 10px; padding: 12px 0; border-bottom: 1px solid var(--beton-2); }
+  td { border: 0; padding: 0; }
+  td.num { grid-row: 1 / 3; }
+  td.places, td.cat { grid-column: 2; font-size: 12px; color: var(--gris); display: inline; }
+  td.act { grid-column: 1 / -1; text-align: left; margin-top: 8px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="p-logo">P</span>
+    <div>
+      <h1 id="titre">Générateur d'invitations</h1>
+      <small id="sous-titre">PSON · Forgiveness · Release party</small>
+    </div>
+  </header>
+  <div class="hazard" aria-hidden="true"></div>
+
+  <form class="panneau" id="form">
+    <label for="liste">Liste des invités
+      <span class="aide">Un invité par ligne. Format : <b>Nom ; places ; catégorie ; téléphone</b> — seul le nom est obligatoire. Pour ajouter un numéro sans changer les places : <b>Nom ; ; ; 243…</b></span>
+      <textarea id="liste" spellcheck="false"></textarea>
+    </label>
+    <div class="grille">
+      <label for="places">Places par défaut<input id="places" type="number" min="1" max="10" value="2"></label>
+      <label for="categorie">Catégorie par défaut<input id="categorie" type="text" list="cats" value="Invité"></label>
+      <label for="depart">N° du premier ticket<input id="depart" type="number" min="1" value="1"></label>
+    </div>
+    <label for="base">Adresse du site d'invitation<input id="base" type="url" spellcheck="false"></label>
+    <label for="message">Message WhatsApp
+      <span class="aide">Variables : {prenom}, {nom}, {places}, {lien}</span>
+      <textarea id="message" rows="3"></textarea>
+    </label>
+    <datalist id="cats"><option value="Invité"><option value="VIP"><option value="Presse"><option value="Artiste"><option value="Staff"></datalist>
+    <div class="actions">
+      <button class="btn btn-signal" type="submit">Générer les invitations</button>
+      <span class="note" id="etat-form"></span>
+    </div>
+  </form>
+
+  <section class="panneau" id="resultats" aria-live="polite">
+    <div class="resume">
+      <div><b id="r-inv">0</b><span>Invitations</span></div>
+      <div><b id="r-places">0</b><span>Places au total</span></div>
+      <div><b id="r-vip">0</b><span>VIP</span></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ligne petit" type="button" id="tout-copier">Copier tous les messages</button>
+      <button class="btn btn-ligne petit" type="button" id="csv">Exporter la liste (CSV)</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>N°</th><th>Nom</th><th>Places</th><th>Catégorie</th><th style="text-align:right">Envoyer</th></tr></thead>
+        <tbody id="lignes"></tbody>
+      </table>
+    </div>
+    <p class="note">La liste exportée sert aussi de liste d'entrée : à la porte, l'agent scanne le QR code du ticket (n'importe quelle appli appareil photo l'affiche) et vérifie le numéro et le nom dans la liste.</p>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="config.js"></script>
+<script src="assets/lien.js"></script>
+<script>
+(function () {
+  "use strict";
+  var C = window.INVITATION;
+  var $ = function (s) { return document.querySelector(s); };
+  var EXEMPLES = (C.listeInvites || []).join("\n");
+  var MESSAGE = "Salut {prenom} ! " + C.artiste + " t'invite à la " + C.typeEvenement.toLowerCase() + " de son album " + C.album + ". Ton invitation perso ({places} pl.) est ici : {lien}";
+  var CLE = "pson-generateur";
+
+  function lire() { try { return JSON.parse(localStorage.getItem(CLE)) || {}; } catch (e) { return {}; } }
+  function garder(v) { try { localStorage.setItem(CLE, JSON.stringify(v)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function pad(n, l) { n = String(n); while (n.length < l) n = "0" + n; return n; }
+
+  document.title = "Générateur · " + C.album;
+  $("#sous-titre").textContent = [C.artiste, C.album, C.typeEvenement].join(" · ");
+  // Adresse de la page invitation : le dossier du site, quelle que soit la façon dont le serveur
+  // affiche le générateur (/generer.html, /generer ou /generer/)
+  function normaliser(url) {
+    try {
+      var u = new URL(url || "./", location.href);
+      u.search = ""; u.hash = "";
+      u.pathname = u.pathname.replace(/\/(generer|index)(\.html)?\/?$/i, "/");
+      if (!/\/$/.test(u.pathname)) u.pathname += "/";
+      return u.href;
+    } catch (e) { return location.origin + "/"; }
+  }
+  var baseDefaut = normaliser(location.href);
+
+  var s = lire();
+  $("#liste").value = s.liste != null ? s.liste : EXEMPLES;
+  $("#places").value = s.places || C.placesParDefaut || 2;
+  $("#categorie").value = s.categorie || C.categorieParDefaut || "Invité";
+  $("#depart").value = s.depart || 1;
+  $("#base").value = s.base ? normaliser(s.base) : baseDefaut;
+  $("#message").value = s.message || MESSAGE;
+
+  var invites = [];
+
+  function generer() {
+    var placesDef = Math.max(1, +$("#places").value || 2), catDef = $("#categorie").value.trim() || "Invité";
+    var no = Math.max(1, +$("#depart").value || 1), base = normaliser($("#base").value.trim() || baseDefaut);
+    $("#base").value = base;
+    invites = $("#liste").value.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
+      var p = l.split(/\s*[;,\t]\s*/);
+      var inv = { nom: p[0], places: Math.max(1, +p[1] || placesDef), categorie: p[2] || catDef, tel: (p[3] || "").replace(/\D/g, ""), numero: no++ };
+      inv.lien = base + "?i=" + window.Lien.encoder(inv);
+      inv.message = $("#message").value
+        .replace(/\{prenom\}/g, window.Lien.court(inv.nom)).replace(/\{nom\}/g, inv.nom)
+        .replace(/\{places\}/g, inv.places).replace(/\{lien\}/g, inv.lien);
+      return inv;
+    });
+    garder({ liste: $("#liste").value, places: placesDef, categorie: catDef, depart: $("#depart").value, base: $("#base").value, message: $("#message").value });
+    rendre();
+  }
+
+  function rendre() {
+    $("#r-inv").textContent = invites.length;
+    $("#r-places").textContent = invites.reduce(function (t, i) { return t + i.places; }, 0);
+    $("#r-vip").textContent = invites.filter(function (i) { return /vip/i.test(i.categorie); }).length;
+    $("#lignes").innerHTML = invites.map(function (inv, k) {
+      var wa = "https://wa.me/" + inv.tel + "?text=" + encodeURIComponent(inv.message);
+      return "<tr>" +
+        '<td class="num">' + pad(inv.numero, 5) + "</td>" +
+        '<td class="nom">' + esc(inv.nom) + "</td>" +
+        '<td class="places">' + inv.places + (inv.places > 1 ? " places" : " place") + "</td>" +
+        '<td class="cat"><span class="' + (/vip/i.test(inv.categorie) ? "vip" : "") + '">' + esc(inv.categorie) + "</span></td>" +
+        '<td class="act">' +
+          '<a class="btn btn-ligne petit" href="' + esc(inv.lien) + '" target="_blank" rel="noopener">Aperçu</a>' +
+          '<button class="btn btn-ligne petit" type="button" data-copier="' + k + '">Copier le lien</button>' +
+          '<a class="btn btn-signal petit" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>' +
+        "</td></tr>";
+    }).join("");
+    $("#etat-form").textContent = invites.length ? invites.length + " liens prêts." : "Ajoute au moins un nom.";
+  }
+
+  function toast(t) { var e = $("#toast"); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { e.hidden = true; }, 2200); }
+  function copier(texte, ok) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texte).then(function () { toast(ok); }, function () { secours(texte, ok); });
+    } else secours(texte, ok);
+  }
+  function secours(texte, ok) {
+    var t = document.createElement("textarea"); t.value = texte; document.body.appendChild(t); t.select();
+    try { document.execCommand("copy"); toast(ok); } catch (e) { toast("Copie impossible : sélectionne le lien à la main."); }
+    t.remove();
+  }
+
+  $("#form").addEventListener("submit", function (e) { e.preventDefault(); generer(); toast(invites.length + " invitations générées"); });
+  $("#lignes").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-copier]");
+    if (b) copier(invites[+b.dataset.copier].lien, "Lien copié");
+  });
+  $("#tout-copier").addEventListener("click", function () {
+    copier(invites.map(function (i) { return i.nom + "\n" + i.message; }).join("\n\n"), "Messages copiés");
+  });
+  $("#csv").addEventListener("click", function () {
+    var lignes = [["numero", "nom", "places", "categorie", "telephone", "lien"]].concat(invites.map(function (i) {
+      return [pad(i.numero, 5), i.nom, i.places, i.categorie, i.tel, i.lien];
+    }));
+    var csv = "﻿" + lignes.map(function (r) { return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(";"); }).join("\r\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = "invites-" + C.album.toLowerCase() + ".csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    toast("Liste exportée");
+  });
+
+  generer();
+})();
+</script>
+</body>
+</html>
